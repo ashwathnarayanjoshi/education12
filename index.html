@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anantrao Education - Math App</title>
+    <style>
+        /* =========================================
+           1. GLOBAL BACKGROUND & LAYOUT
+           ========================================= */
+        body {
+            background-color: #6a11cb;
+            background-image: 
+                url("data:image/svg+xml,%3Csvg width='120' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.15' font-family='Arial' font-size='28' font-weight='bold'%3E%3Ctext x='15' y='35'%3E%2B%3C/text%3E%3Ctext x='75' y='25'%3E-%3C/text%3E%3Ctext x='45' y='65'%3E×%3C/text%3E%3Ctext x='95' y='75'%3E÷%3C/text%3E%3Ctext x='25' y='105'%3E=%3C/text%3E%3Ctext x='85' y='115'%3E%25%3C/text%3E%3Ctext x='55' y='110'%3Eπ%3C/text%3E%3C/g%3E%3C/svg%3E"),
+                linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden; 
+        }
+
+        .main-heading {
+            color: white;
+            font-size: 42px;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
+            letter-spacing: 1px;
+            z-index: 10;
+        }
+
+        /* =========================================
+           2. PORTAL (LOGIN & CHAPTERS) STYLES
+           ========================================= */
+        .portal-container {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 400px; 
+            text-align: center;
+            position: relative; 
+            z-index: 10;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .logo-text {
+            color: #6a11cb;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px;}
+        .input-group input {
+            width: 100%; padding: 10px; border: 2px solid #ddd;
+            border-radius: 8px; font-size: 15px; box-sizing: border-box;
+        }
+        .input-group input:focus { border-color: #2196f3; outline: none; }
+
+        .error-message { color: #f44336; font-weight: bold; margin-bottom: 15px; display: none; }
+
+        .btn-portal {
+            width: 100%; padding: 12px; font-size: 18px; font-weight: bold;
+            color: white; border: none; border-radius: 8px; cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-login { background-color: #2196f3; }
+        .btn-login:hover { background-color: #1e88e5; }
+        .btn-start { background-color: #4caf50; margin-top: 10px; }
+        .btn-start:hover { background-color: #388e3c; }
+        .btn-whatsapp { background-color: #25D366; margin-top: 10px; }
+        .btn-whatsapp:hover { background-color: #1ebe57; }
+        .btn-back-gray { background-color: #6c757d; margin-top: 10px; }
+        .btn-back-gray:hover { background-color: #5a6268; }
+
+        #classSelectionScreen, #trialClassSelectionScreen, #loginScreen, #welcomeScreen, #chaptersScreen, #trialFormScreen { display: none; }
+
+        .welcome-text { font-size: 28px; color: #ff9800; font-weight: bold; margin-bottom: 10px; }
+
+        .chapters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 20px; }
+        .chapter-box {
+            background: #e0f7fa; border: 3px solid #00bcd4; padding: 20px 10px;
+            border-radius: 10px; font-weight: bold; color: #333; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .chapter-box:hover { background: #b2ebf2; transform: translateY(-5px); }
+        .chapter-locked { background: #f1f3f5; border-color: #ced4da; color: #adb5bd; cursor: not-allowed; }
+        .chapter-locked:hover { transform: none; background: #f1f3f5; }
+
+
+        /* =========================================
+           3. GAME QUIZ BOX STYLES
+           ========================================= */
+        .quiz-container {
+            background: white; padding: 30px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 450px; 
+            position: relative; z-index: 10; max-height: 85vh; overflow-y: auto;
+        }
+
+        .turn-indicator {
+            text-align: center; font-size: 20px; font-weight: bold; color: white;
+            padding: 8px 20px; border-radius: 20px; display: inline-block;
+            margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative; left: 50%; transform: translateX(-50%);
+        }
+
+        .single-score-box {
+            background: #ffeb3b; color: #333; border: 3px solid #fbc02d;
+            font-size: 22px; font-weight: bold; padding: 10px 20px; border-radius: 15px;
+            text-align: center; margin-bottom: 15px; display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .question-box {
+            font-size: 20px; font-weight: bold; color: #333; margin-bottom: 20px;
+            padding: 20px; background: #e0f7fa; border-radius: 10px; border: 3px solid #00bcd4;
+        }
+
+        .option {
+            display: block; width: 100%; padding: 15px; margin: 10px 0;
+            font-size: 18px; font-weight: bold; border: 2px solid #ddd;
+            border-radius: 8px; background: #f8f9fa; color: #555;
+            cursor: pointer; transition: 0.2s; text-align: left;
+        }
+        .option:hover:not(:disabled) { background: #e2e6ea; border-color: #ccc; }
+        .correct { background-color: #4caf50 !important; color: white !important; border-color: #388e3c !important; }
+        .incorrect { background-color: #f44336 !important; color: white !important; border-color: #d32f2f !important; }
+        sup { font-size: 12px; line-height: 0; vertical-align: super; }
+
+        .controls { display: flex; justify-content: space-between; margin-top: 20px; gap: 8px; }
+        .control-btn {
+            flex: 1; padding: 12px 5px; font-size: 15px; font-weight: bold;
+            color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center;
+        }
+        .back-btn { background-color: #6c757d; } 
+        .reset-btn { background-color: #ff9800; } 
+        .next-btn { background-color: #2196f3; } 
+        .finish-btn { background-color: #e91e63; } 
+        .control-btn:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
+
+        .results-text { font-size: 32px; margin-bottom: 15px; color: #6a11cb; font-weight: bold;}
+        .results-score { font-size: 28px; margin-bottom: 10px; }
+        .winner-text { font-size: 36px; color: #4caf50; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); margin: 20px 0; }
+        .whatsapp-link { color: #25D366; text-decoration: none; font-weight: bold; }
+
+        /* =========================================
+           4. TEAM PANELS & RESTART STYLES
+           ========================================= */
+        .team-panel {
+            position: absolute; top: 50%; transform: translateY(-50%); display: flex;
+            flex-direction: column; align-items: center; font-family: 'Comic Sans MS', sans-serif; 
+            z-index: 5; background-color: rgba(255, 255, 255, 0.95);
+            padding: 25px 35px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+        }
+        .team-title { font-size: 40px; font-weight: bold; margin-bottom: 5px; }
+        .team-points-label { font-size: 24px; margin-bottom: 15px; }
+        .score-circle {
+            width: 120px; height: 120px; border: 6px solid; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 55px; font-weight: bold; margin-bottom: 20px; background: white;
+        }
+        .team-btn-container { display: flex; gap: 15px; }
+        .team-score-btn {
+            width: 55px; height: 55px; border-radius: 10px; border: none;
+            font-size: 40px; font-weight: bold; color: white; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center;
+        }
+        .team-score-btn:active { transform: scale(0.9); }
+
+        .team-left { left: 5%; border: 6px solid #ff5252; } 
+        .team-left .team-title, .team-left .team-points-label, .team-left .score-circle { color: #ff5252; }
+        .team-left .score-circle { border-color: #ff5252; }
+        .team-left .team-score-btn { background-color: #ff5252; }
+
+        .team-right { right: 5%; border: 6px solid #ffeb3b; } 
+        .team-right .team-title, .team-right .team-points-label, .team-right .score-circle { color: #ffca28; }
+        .team-right .score-circle { border-color: #ffeb3b; }
+        .team-right .team-score-btn { background-color: #ffca28; }
+
+        .restart-bottom-right {
+            position: fixed; bottom: 20px; right: 20px; background-color: #333; color: white;
+            border: 2px solid white; border-radius: 8px; padding: 12px 24px;
+            font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100; 
+        }
+        .restart-bottom-right:hover { background-color: #555; transform: scale(1.05); }
+
+    </style>
+</head>
+<body>
+
+    <h1 class="main-heading">Anantrao Education</h1>
+
+    <div id="portalSection" class="portal-container">
+        
+        <div id="landingScreen" style="display: block;">
+            <div class="welcome-text">Welcome to</div>
+            <div class="logo-text">Anantrao Education!</div>
+            <p style="margin-bottom: 25px; color: #555;">Choose your access type to continue:</p>
+            
+            <button class="btn-portal btn-start" onclick="showTrialForm()">Trial Access</button>
+            <button class="btn-portal btn-login" style="margin-top: 15px;" onclick="showClassSelection()">Premium Access</button>
+        </div>
+
+        <div id="trialFormScreen">
+            <div class="logo-text">Start Free Trial</div>
+            <p style="margin-bottom: 15px; font-size: 14px; color: #555;">Fill out the form below to begin your trial.</p>
+            
+            <form id="trialForm" onsubmit="submitTrialForm(event)">
+                <div class="input-group">
+                    <label>Student Name *</label>
+                    <input type="text" id="trialName" required placeholder="Enter full name">
+                </div>
+                <div class="input-group">
+                    <label>Class *</label>
+                    <input type="text" id="trialClass" required placeholder="e.g., 10th, 12th">
+                </div>
+                <div class="input-group">
+                    <label>City *</label>
+                    <input type="text" id="trialCity" required placeholder="Enter your city">
+                </div>
+                <div class="input-group">
+                    <label>Mobile Number *</label>
+                    <input type="tel" id="trialMobile" required placeholder="Enter 10-digit number" pattern="[0-9]{10}">
+                </div>
+                <div class="input-group">
+                    <label>Email ID (Optional)</label>
+                    <input type="email" id="trialEmail" placeholder="Enter email address">
+                </div>
+
+                <p id="trialLoadingMsg" style="display:none; color: #6a11cb; font-weight:bold; margin-bottom:15px;">Saving Data. Please wait...</p>
+                
+                <button type="submit" class="btn-portal btn-start" id="trialSubmitBtn">Submit to View Menu</button>
+                <button type="button" class="btn-portal btn-back-gray" onclick="backToLanding()">Back</button>
+            </form>
+        </div>
+
+        <div id="trialClassSelectionScreen">
+            <div class="logo-text">Trial Access Menu</div>
+            <p style="margin-bottom: 5px; color: #555;">Choose your grade to start the quiz:</p>
+            <div class="chapters-grid">
+                <div class="chapter-box" style="background:#ffcdd2; border-color:#f44336;" onclick="startTrialQuiz('5th')">5th Grade</div>
+                <div class="chapter-box" style="background:#f8bbd0; border-color:#e91e63;" onclick="startTrialQuiz('6th')">6th Grade</div>
+                <div class="chapter-box" style="background:#e1bee7; border-color:#9c27b0;" onclick="startTrialQuiz('7th')">7th Grade</div>
+                <div class="chapter-box" style="background:#d1c4e9; border-color:#673ab7;" onclick="startTrialQuiz('8th')">8th Grade</div>
+                <div class="chapter-box" style="background:#c5cae9; border-color:#3f51b5;" onclick="startTrialQuiz('9th')">9th Grade</div>
+                <div class="chapter-box" style="background:#bbdefb; border-color:#2196f3;" onclick="startTrialQuiz('10th')">10th Grade</div>
+                <div class="chapter-box" style="background:#b2dfdb; border-color:#009688;" onclick="startTrialQuiz('11th')">11th Grade</div>
+                <div class="chapter-box" style="background:#c8e6c9; border-color:#4caf50;" onclick="startTrialQuiz('12th')">12th Grade</div>
+            </div>
+            <button class="btn-portal btn-back-gray" onclick="backToLanding()">Back</button>
+        </div>
+
+        <div id="classSelectionScreen">
+            <div class="logo-text">Select Class</div>
+            <p style="margin-bottom: 5px; color: #555;">Choose your class to login:</p>
+            <div class="chapters-grid">
+                <div class="chapter-box" style="background:#ffcdd2; border-color:#f44336;" onclick="goToLogin('5th')">5th</div>
+                <div class="chapter-box" style="background:#f8bbd0; border-color:#e91e63;" onclick="goToLogin('6th')">6th</div>
+                <div class="chapter-box" style="background:#e1bee7; border-color:#9c27b0;" onclick="goToLogin('7th')">7th</div>
+                <div class="chapter-box" style="background:#d1c4e9; border-color:#673ab7;" onclick="goToLogin('8th')">8th</div>
+                <div class="chapter-box" style="background:#c5cae9; border-color:#3f51b5;" onclick="goToLogin('9th')">9th</div>
+                <div class="chapter-box" style="background:#bbdefb; border-color:#2196f3;" onclick="goToLogin('10th')">10th</div>
+                <div class="chapter-box" style="background:#b2dfdb; border-color:#009688;" onclick="goToLogin('PUC 1st Year')">PUC 1st Year</div>
+                <div class="chapter-box" style="background:#c8e6c9; border-color:#4caf50;" onclick="goToLogin('PUC 2nd Year')">PUC 2nd Year</div>
+            </div>
+            <button class="btn-portal btn-back-gray" onclick="backToLanding()">Back</button>
+        </div>
+
+        <div id="loginScreen">
+            <div class="logo-text" id="loginScreenTitle">Premium Login</div>
+            <div class="error-message" id="errorMsg">Incorrect Mobile or Password!</div>
+
+            <div class="input-group">
+                <label>Mobile Number</label>
+                <input type="text" id="mobileInput" placeholder="Enter 10-digit number">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="passwordInput" placeholder="Enter password">
+            </div>
+
+            <button class="btn-portal btn-login" onclick="checkLogin()">Login</button>
+            <button class="btn-portal btn-back-gray" onclick="showClassSelection()">Back</button>
+            <p style="font-size: 12px; color: #888; margin-top: 15px;">
+                <strong>(Sharing login credentials without permission <br> will result in legal action.)</strong>
+            </p>
+        </div>
+
+        <div id="welcomeScreen">
+            <div class="welcome-text">Login Successful!</div>
+            <div class="logo-text" id="welcomeScreenTitle">Premium Access</div>
+            <p style="margin-bottom: 25px; color: #555;">Ready to practice your math skills?</p>
+            <button class="btn-portal btn-start" onclick="showChapters()">Go To Chapters</button>
+        </div>
+
+        <div id="chaptersScreen">
+            <div class="logo-text">Select Chapter</div>
+            <div class="chapters-grid">
+                <div class="chapter-box" onclick="startPremiumGame()">Ch 1: Prime Factors & Roots</div>
+                
+                <div class="chapter-box chapter-locked" onclick="alert('Locked!')">Ch 2: Algebra (Locked)</div>
+                <div class="chapter-box chapter-locked" onclick="alert('Locked!')">Ch 3: Geometry (Locked)</div>
+                <div class="chapter-box chapter-locked" onclick="alert('Locked!')">Ch 4: Fractions (Locked)</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameSection" style="display: none;">
+        
+        <div class="team-panel team-left" id="teamPanelA">
+            <div class="team-title">Team A</div>
+            <div class="team-points-label">Points</div>
+            <div class="score-circle" id="teamAScoreDisplay">0</div>
+            <div class="team-btn-container">
+                <button class="team-score-btn" onclick="updateTeamScore('A', 5)">+</button>
+                <button class="team-score-btn" onclick="updateTeamScore('A', -5)">−</button>
+            </div>
+        </div>
+
+        <div class="quiz-container">
+            <div id="singleScoreBox" class="single-score-box">Points: <span id="trialScoreDisplay">0</span></div>
+
+            <div id="turnIndicator" class="turn-indicator"></div>
+            <div class="question-box" id="questionText">Loading question...</div>
+            <div class="options-container" id="optionsContainer"></div>
+
+            <div class="controls" id="controlsContainer">
+                <button class="control-btn back-btn" id="backBtn" onclick="goBack()">Back</button>
+                <button class="control-btn reset-btn" id="resetBtn" onclick="resetQuestion()">Reset</button>
+                <button class="control-btn next-btn" id="nextBtn" onclick="goNext()">Next</button>
+                <button class="control-btn finish-btn" id="finishBtn" onclick="finishQuiz()">Finish</button>
+            </div>
+        </div>
+
+        <div class="team-panel team-right" id="teamPanelB">
+            <div class="team-title">Team B</div>
+            <div class="team-points-label">Points</div>
+            <div class="score-circle" id="teamBScoreDisplay">0</div>
+            <div class="team-btn-container">
+                <button class="team-score-btn" onclick="updateTeamScore('B', 5)">+</button>
+                <button class="team-score-btn" onclick="updateTeamScore('B', -5)">−</button>
+            </div>
+        </div>
+
+        <button class="restart-bottom-right" id="homeBtn" onclick="restartToPortal()">Exit to Home</button>
+    </div>
+
+
+    <script>
+        // --- PORTAL NAVIGATION LOGIC ---
+        let selectedClass = "";
+        let isTrialMode = false;
+        const WHATSAPP_NUMBER = "9739667787"; // Updated to requested WhatsApp Number
+
+        function hideAllPortalScreens() {
+            document.getElementById('landingScreen').style.display = 'none';
+            document.getElementById('trialFormScreen').style.display = 'none';
+            document.getElementById('trialClassSelectionScreen').style.display = 'none';
+            document.getElementById('classSelectionScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('chaptersScreen').style.display = 'none';
+            document.getElementById('errorMsg').style.display = 'none';
+        }
+
+        function backToLanding() {
+            hideAllPortalScreens();
+            document.getElementById('landingScreen').style.display = 'block';
+        }
+
+        function showTrialForm() {
+            hideAllPortalScreens();
+            document.getElementById('trialFormScreen').style.display = 'block';
+        }
+
+        function showClassSelection() {
+            hideAllPortalScreens();
+            document.getElementById('classSelectionScreen').style.display = 'block';
+        }
+
+        function showTrialClassSelection() {
+            hideAllPortalScreens();
+            document.getElementById('trialClassSelectionScreen').style.display = 'block';
+        }
+
+        function goToLogin(className) {
+            selectedClass = className;
+            hideAllPortalScreens();
+            document.getElementById('loginScreenTitle').innerText = className + " Login";
+            document.getElementById('welcomeScreenTitle').innerText = className + " Premium";
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('mobileInput').value = "";
+            document.getElementById('passwordInput').value = "";
+            document.getElementById('errorMsg').style.display = 'none';
+        }
+
+        // --- GOOGLE SHEETS FORM SUBMIT (TRIAL) ---
+        function submitTrialForm(event) {
+            event.preventDefault();
+
+            const submitBtn = document.getElementById('trialSubmitBtn');
+            const loadingMsg = document.getElementById('trialLoadingMsg');
+            
+            submitBtn.disabled = true;
+            loadingMsg.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('Name', document.getElementById('trialName').value);
+            formData.append('Class', document.getElementById('trialClass').value);
+            formData.append('City', document.getElementById('trialCity').value);
+            formData.append('Mobile', document.getElementById('trialMobile').value);
+            formData.append('Email', document.getElementById('trialEmail').value);
+            formData.append('Type', 'Trial Entry');
+
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4bb1XcGh0NySZg0FFwVloco42sb-odMaJ0ct55j1UgbuGDsXAVZf7_OCuIJ1wPgQ0nw/exec"; 
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors' 
+            })
+            .then(response => {
+                showTrialClassSelection(); 
+            })
+            .catch(error => {
+                console.error('Error saving data:', error);
+                showTrialClassSelection(); 
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                loadingMsg.style.display = 'none';
+                document.getElementById('trialForm').reset();
+            });
+        }
+
+
+        // --- PREMIUM LOGIN LOGIC BY CLASS ---
+        const classCredentials = {
+            "5th": [{ mobile: "6364795756", pass: "math5" }, { mobile: "9876543210", pass: "student2" }, { mobile: "9998887776", pass: "student3" }],
+            "6th": [{ mobile: "6666666666", pass: "math6" }],
+            "7th": [{ mobile: "7777777777", pass: "math7" }],
+            "8th": [{ mobile: "8888888888", pass: "math8" }],
+            "9th": [{ mobile: "9999999999", pass: "math9" }],
+            "10th": [{ mobile: "8088666694", pass: "math123" }],
+            "PUC 1st Year": [{ mobile: "1111111111", pass: "puc1" }],
+            "PUC 2nd Year": [{ mobile: "2222222222", pass: "puc2" }]
+        };
+
+        function checkLogin() {
+            const enteredMobile = document.getElementById('mobileInput').value;
+            const enteredPass = document.getElementById('passwordInput').value;
+            const validUsersList = classCredentials[selectedClass];
+            const isLoginValid = validUsersList && validUsersList.some(user => user.mobile === enteredMobile && user.pass === enteredPass);
+
+            if (isLoginValid) {
+                hideAllPortalScreens();
+                document.getElementById('welcomeScreen').style.display = 'block';
+                document.getElementById('passwordInput').value = "";
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        }
+
+        function showChapters() {
+            hideAllPortalScreens();
+            document.getElementById('chaptersScreen').style.display = 'block';
+        }
+
+        // --- QUESTION BANKS ---
+        // Premium Quiz Data (Original)
+        const premiumQuizData = [
+            { question: "Q1. The prime factorisation of the number 156 is:", options: ["A) 2 × 3 × 13", "B) 2<sup>2</sup> × 3 × 13", "C) 2<sup>2</sup> × 3<sup>2</sup> × 13", "D) 2 × 3<sup>2</sup> × 13"], correctIndex: 1 },
+            { question: "Q2. What is the square root of 144?", options: ["A) 10", "B) 11", "C) 12", "D) 14"], correctIndex: 2 },
+            { question: "Q3. What is 5<sup>3</sup>?", options: ["A) 15", "B) 25", "C) 125", "D) 150"], correctIndex: 2 },
+            { question: "Q4. What is 9 × 8?", options: ["A) 64", "B) 72", "C) 81", "D) 84"], correctIndex: 1 }
+        ];
+
+        // Trial CBSE Question Banks (10 per grade provided)
+        const trialQuestions = {
+            "5th": [
+                { question: "Q1. The place value of 5 in 6,54,321 is:", options: ["A) 50,000", "B) 5,000", "C) 500", "D) 50"], correctIndex: 0 },
+                { question: "Q2. Which of the following is equivalent to 3/4?", options: ["A) 6/8", "B) 5/8", "C) 4/5", "D) 9/16"], correctIndex: 0 },
+                { question: "Q3. What is the perimeter of a square with side 6 cm?", options: ["A) 12 cm", "B) 24 cm", "C) 36 cm", "D) 18 cm"], correctIndex: 1 },
+                { question: "Q4. Add: 2.5 + 3.7", options: ["A) 5.2", "B) 6.1", "C) 6.2", "D) 5.12"], correctIndex: 2 },
+                { question: "Q5. How many hours are there in 3 days?", options: ["A) 36 hours", "B) 48 hours", "C) 72 hours", "D) 60 hours"], correctIndex: 2 },
+                { question: "Q6. 1 Million is equal to:", options: ["A) 1 Lakh", "B) 10 Lakh", "C) 1 Crore", "D) 10 Crore"], correctIndex: 1 },
+                { question: "Q7. What is the volume of a cube with edge 3 cm?", options: ["A) 9 cu cm", "B) 18 cu cm", "C) 27 cu cm", "D) 12 cu cm"], correctIndex: 2 },
+                { question: "Q8. Find the HCF of 12 and 16.", options: ["A) 2", "B) 4", "C) 6", "D) 8"], correctIndex: 1 },
+                { question: "Q9. 45% can be written as the fraction:", options: ["A) 9/20", "B) 4/5", "C) 45/10", "D) 9/10"], correctIndex: 0 },
+                { question: "Q10. The sum of the angles of a triangle is:", options: ["A) 90°", "B) 180°", "C) 270°", "D) 360°"], correctIndex: 1 }
+            ],
+            "6th": [
+                { question: "Q1. The predecessor of -5 is:", options: ["A) -4", "B) -6", "C) 4", "D) 6"], correctIndex: 1 },
+                { question: "Q2. The ratio of 50p to ₹3 is:", options: ["A) 1:6", "B) 1:3", "C) 5:3", "D) 50:3"], correctIndex: 0 },
+                { question: "Q3. The algebraic expression for 'x multiplied by 3 and then 5 added' is:", options: ["A) 3x - 5", "B) 5x + 3", "C) x + 15", "D) 3x + 5"], correctIndex: 3 },
+                { question: "Q4. Which of these is a prime number?", options: ["A) 21", "B) 27", "C) 29", "D) 33"], correctIndex: 2 },
+                { question: "Q5. If 2x = 10, then x is:", options: ["A) 20", "B) 5", "C) 8", "D) 12"], correctIndex: 1 },
+                { question: "Q6. The area of a rectangle with length 8cm and breadth 5cm is:", options: ["A) 26 cm²", "B) 40 cm²", "C) 13 cm²", "D) 85 cm²"], correctIndex: 1 },
+                { question: "Q7. Write 0.04 as a fraction in simplest form.", options: ["A) 1/25", "B) 4/10", "C) 2/5", "D) 1/40"], correctIndex: 0 },
+                { question: "Q8. The Roman numeral for 45 is:", options: ["A) XXXXV", "B) XLV", "C) VL", "D) LMV"], correctIndex: 1 },
+                { question: "Q9. (-10) + (+7) is equal to:", options: ["A) 17", "B) -17", "C) 3", "D) -3"], correctIndex: 3 },
+                { question: "Q10. A polygon with 5 sides is called a:", options: ["A) Hexagon", "B) Pentagon", "C) Heptagon", "D) Octagon"], correctIndex: 1 }
+            ],
+            "7th": [
+                { question: "Q1. The value of (-3) × (-4) × (-1) is:", options: ["A) 12", "B) -12", "C) -7", "D) 7"], correctIndex: 1 },
+                { question: "Q2. Which is greater: 2/3 or 3/4?", options: ["A) 2/3", "B) 3/4", "C) They are equal", "D) Cannot be determined"], correctIndex: 1 },
+                { question: "Q3. The mean of first 5 natural numbers is:", options: ["A) 2", "B) 3", "C) 4", "D) 5"], correctIndex: 1 },
+                { question: "Q4. Solve: 3p - 10 = 5", options: ["A) p = 15", "B) p = 5", "C) p = -5", "D) p = 3"], correctIndex: 1 },
+                { question: "Q5. The complement of an angle of 40° is:", options: ["A) 140°", "B) 50°", "C) 90°", "D) 180°"], correctIndex: 1 },
+                { question: "Q6. If two sides of a triangle are 5 cm and 7 cm, the third side must be less than:", options: ["A) 12 cm", "B) 2 cm", "C) 35 cm", "D) 7 cm"], correctIndex: 0 },
+                { question: "Q7. Find 25% of 120.", options: ["A) 20", "B) 25", "C) 30", "D) 40"], correctIndex: 2 },
+                { question: "Q8. The area of a circle with radius 7 cm is (use π=22/7):", options: ["A) 44 cm²", "B) 154 cm²", "C) 14 cm²", "D) 77 cm²"], correctIndex: 1 },
+                { question: "Q9. 2<sup>3</sup> × 2<sup>2</sup> is equal to:", options: ["A) 2<sup>6</sup>", "B) 2<sup>5</sup>", "C) 4<sup>5</sup>", "D) 4<sup>6</sup>"], correctIndex: 1 },
+                { question: "Q10. How many lines of symmetry does an equilateral triangle have?", options: ["A) 1", "B) 2", "C) 3", "D) 4"], correctIndex: 2 }
+            ],
+            "8th": [
+                { question: "Q1. The multiplicative inverse of -3/5 is:", options: ["A) 3/5", "B) -5/3", "C) 5/3", "D) 1"], correctIndex: 1 },
+                { question: "Q2. Solve for x: 2x - 3 = x + 2", options: ["A) x = 5", "B) x = -1", "C) x = 1", "D) x = -5"], correctIndex: 0 },
+                { question: "Q3. The sum of the exterior angles of any polygon is:", options: ["A) 180°", "B) 360°", "C) 540°", "D) 720°"], correctIndex: 1 },
+                { question: "Q4. The square root of 625 is:", options: ["A) 15", "B) 20", "C) 25", "D) 35"], correctIndex: 2 },
+                { question: "Q5. 10<sup>-3</sup> is equal to:", options: ["A) 1000", "B) 1/100", "C) 1/1000", "D) -30"], correctIndex: 2 },
+                { question: "Q6. Factorize: a² - b²", options: ["A) (a+b)²", "B) (a-b)²", "C) (a+b)(a-b)", "D) a² + b²"], correctIndex: 2 },
+                { question: "Q7. The volume of a cylinder with radius 'r' and height 'h' is:", options: ["A) 2πrh", "B) πr²h", "C) 1/3πr²h", "D) 4/3πr³"], correctIndex: 1 },
+                { question: "Q8. A die is thrown. The probability of getting a prime number is:", options: ["A) 1/2", "B) 1/3", "C) 1/6", "D) 2/3"], correctIndex: 0 },
+                { question: "Q9. Profit% is calculated on:", options: ["A) Selling Price", "B) Marked Price", "C) Cost Price", "D) Discount"], correctIndex: 2 },
+                { question: "Q10. Standard form of 0.000035 is:", options: ["A) 3.5 × 10<sup>5</sup>", "B) 3.5 × 10<sup>-5</sup>", "C) 35 × 10<sup>-6</sup>", "D) 3.5 × 10<sup>-4</sup>"], correctIndex: 1 }
+            ],
+            "9th": [
+                { question: "Q1. An irrational number between 1/7 and 2/7 is:", options: ["A) 1.5/7", "B) 0.151551555...", "C) √4", "D) 0.2"], correctIndex: 1 },
+                { question: "Q2. The degree of the polynomial 4x⁴ + 0x³ + 0x⁵ + 5x + 7 is:", options: ["A) 4", "B) 5", "C) 3", "D) 7"], correctIndex: 0 },
+                { question: "Q3. The point (-3, 5) lies in which quadrant?", options: ["A) First", "B) Second", "C) Third", "D) Fourth"], correctIndex: 1 },
+                { question: "Q4. A linear equation in two variables has how many solutions?", options: ["A) One", "B) Two", "C) Zero", "D) Infinitely many"], correctIndex: 3 },
+                { question: "Q5. If two parallel lines are cut by a transversal, the alternate interior angles are:", options: ["A) Supplementary", "B) Complementary", "C) Equal", "D) Unequal"], correctIndex: 2 },
+                { question: "Q6. In a triangle ABC, if AB = AC and ∠B = 50°, then ∠C is:", options: ["A) 40°", "B) 50°", "C) 80°", "D) 100°"], correctIndex: 1 },
+                { question: "Q7. The sum of the angles of a quadrilateral is:", options: ["A) 180°", "B) 270°", "C) 360°", "D) 540°"], correctIndex: 2 },
+                { question: "Q8. Area of a triangle by Heron's formula is √(s(s-a)(s-b)(s-c)). Here 's' stands for:", options: ["A) Sum of sides", "B) Semi-perimeter", "C) Square of perimeter", "D) None of these"], correctIndex: 1 },
+                { question: "Q9. The curved surface area of a sphere of radius 'r' is:", options: ["A) 4πr²", "B) 3πr²", "C) 2πr²", "D) πr²"], correctIndex: 0 },
+                { question: "Q10. The class mark of the class interval 10-20 is:", options: ["A) 10", "B) 15", "C) 20", "D) 30"], correctIndex: 1 }
+            ],
+            "10th": [
+                { question: "Q1. The HCF of 96 and 404 is:", options: ["A) 4", "B) 8", "C) 12", "D) 96"], correctIndex: 0 },
+                { question: "Q2. The sum of the zeroes of the quadratic polynomial 3x² - 5x + 2 is:", options: ["A) -5/3", "B) 5/3", "C) -2/3", "D) 2/3"], correctIndex: 1 },
+                { question: "Q3. The common difference of the AP 1/p, (1-p)/p, (1-2p)/p... is:", options: ["A) p", "B) -p", "C) -1", "D) 1"], correctIndex: 2 },
+                { question: "Q4. The distance of the point P(2, 3) from the x-axis is:", options: ["A) 2", "B) 3", "C) 1", "D) 5"], correctIndex: 1 },
+                { question: "Q5. If sin A = 3/4, then calculate cos A:", options: ["A) 4/5", "B) √7/4", "C) √7/3", "D) 1/4"], correctIndex: 1 },
+                { question: "Q6. A tangent to a circle intersects it in how many points?", options: ["A) 1", "B) 2", "C) 0", "D) Infinitely many"], correctIndex: 0 },
+                { question: "Q7. The probability of a sure event is:", options: ["A) 0", "B) 1", "C) 1/2", "D) None of these"], correctIndex: 1 },
+                { question: "Q8. Volume of a frustum of a cone is:", options: ["A) 1/3πh(r1²+r2²+r1r2)", "B) 1/3πh(r1²+r2²-r1r2)", "C) πh(r1²+r2²+r1r2)", "D) 1/3πh(r1³+r2³+r1r2)"], correctIndex: 0 },
+                { question: "Q9. 1 + tan²θ is equal to:", options: ["A) sin²θ", "B) cos²θ", "C) sec²θ", "D) cosec²θ"], correctIndex: 2 },
+                { question: "Q10. The empirical relationship between mean, median and mode is:", options: ["A) 3 Median = Mode + 2 Mean", "B) 3 Mean = Mode + 2 Median", "C) Mode = 3 Median - 2 Mean", "D) Both A and C"], correctIndex: 3 }
+            ],
+            "11th": [
+                { question: "Q1. The number of subsets of a set containing n elements is:", options: ["A) n", "B) 2n", "C) n²", "D) 2ⁿ"], correctIndex: 3 },
+                { question: "Q2. The domain of the function f(x) = √(x-2) is:", options: ["A) (2, ∞)", "B) [2, ∞)", "C) R", "D) (-∞, 2]"], correctIndex: 1 },
+                { question: "Q3. The value of sin(15°) is:", options: ["A) (√3-1)/(2√2)", "B) (√3+1)/(2√2)", "C) 1/2", "D) √3/2"], correctIndex: 0 },
+                { question: "Q4. i² is equal to (where i is imaginary unit):", options: ["A) 1", "B) -1", "C) 0", "D) i"], correctIndex: 1 },
+                { question: "Q5. The number of ways in which 5 people can be arranged in a line is:", options: ["A) 24", "B) 120", "C) 60", "D) 125"], correctIndex: 1 },
+                { question: "Q6. In a GP, if the 3rd term is 24 and 6th term is 192, find the common ratio.", options: ["A) 2", "B) 3", "C) 4", "D) 1/2"], correctIndex: 0 },
+                { question: "Q7. The slope of a line passing through (1, 2) and (3, 4) is:", options: ["A) 1", "B) 2", "C) -1", "D) 1/2"], correctIndex: 0 },
+                { question: "Q8. Equation of a circle with center (0,0) and radius r is:", options: ["A) x² - y² = r²", "B) x² + y² = r²", "C) x + y = r", "D) x² + y² = 0"], correctIndex: 1 },
+                { question: "Q9. The derivative of sin(x) with respect to x is:", options: ["A) -cos(x)", "B) sin(x)", "C) cos(x)", "D) -sin(x)"], correctIndex: 2 },
+                { question: "Q10. What is lim (x->0) (sin x / x)?", options: ["A) 0", "B) 1", "C) ∞", "D) Does not exist"], correctIndex: 1 }
+            ],
+            "12th": [
+                { question: "Q1. A relation R in a set A is called symmetric if:", options: ["A) (a,b)∈R ⇒ (b,a)∈R", "B) (a,b)∈R, (b,c)∈R ⇒ (a,c)∈R", "C) (a,a)∈R", "D) None of these"], correctIndex: 0 },
+                { question: "Q2. Principal value branch of sin⁻¹x is:", options: ["A) [0, π]", "B) [-π/2, π/2]", "C) (0, π)", "D) (-π/2, π/2)"], correctIndex: 1 },
+                { question: "Q3. If a matrix has 6 elements, possible orders are:", options: ["A) 4", "B) 2", "C) 6", "D) 3"], correctIndex: 0 },
+                { question: "Q4. Derivative of e<sup>x</sup> is:", options: ["A) x.e<sup>x-1</sup>", "B) e<sup>x</sup>", "C) e<sup>x</sup>/x", "D) 1/e<sup>x</sup>"], correctIndex: 1 },
+                { question: "Q5. The integral of x dx is:", options: ["A) x² + C", "B) x²/2 + C", "C) 1 + C", "D) x³/3 + C"], correctIndex: 1 },
+                { question: "Q6. Order of the differential equation d²y/dx² + (dy/dx)³ + y = 0 is:", options: ["A) 1", "B) 2", "C) 3", "D) 0"], correctIndex: 1 },
+                { question: "Q7. If |a|=2, |b|=3 and a.b = 3, angle between a and b is:", options: ["A) π/3", "B) π/2", "C) π/4", "D) π/6"], correctIndex: 0 },
+                { question: "Q8. Direction cosines of x-axis are:", options: ["A) (1,1,1)", "B) (0,1,0)", "C) (1,0,0)", "D) (0,0,1)"], correctIndex: 2 },
+                { question: "Q9. Probability of drawing a red card from a deck of 52 cards is:", options: ["A) 1/4", "B) 1/2", "C) 1/13", "D) 1/26"], correctIndex: 1 },
+                { question: "Q10. The feasible region in a LPP is always:", options: ["A) A concave polygon", "B) A convex polygon", "C) A circle", "D) None of these"], correctIndex: 1 }
+            ]
+        };
+
+        let currentQuizData = [];
+        let currentQuestionIndex = 0;
+        let userChoices = [];
+        
+        // Premium Scores
+        let teamAScore = 0;
+        let teamBScore = 0;
+        
+        // Trial Score
+        let singlePlayerScore = 0;
+
+        // --- GAME START & SETTINGS ---
+        function startPremiumGame() {
+            isTrialMode = false;
+            currentQuizData = premiumQuizData;
+            document.getElementById('portalSection').style.display = 'none';
+            document.getElementById('gameSection').style.display = 'block';
+            
+            // Show Premium UI Elements
+            document.getElementById('teamPanelA').style.display = 'flex';
+            document.getElementById('teamPanelB').style.display = 'flex';
+            document.getElementById('homeBtn').style.display = 'block';
+            document.getElementById('resetBtn').style.display = 'block';
+            document.getElementById('singleScoreBox').style.display = 'none';
+
+            restartEntireQuiz(); 
+        }
+
+        function startTrialQuiz(grade) {
+            isTrialMode = true;
+            currentQuizData = trialQuestions[grade];
+            document.getElementById('portalSection').style.display = 'none';
+            document.getElementById('gameSection').style.display = 'block';
+
+            // Hide Premium UI Elements / Show Trial UI Elements
+            document.getElementById('teamPanelA').style.display = 'none';
+            document.getElementById('teamPanelB').style.display = 'none';
+            document.getElementById('homeBtn').style.display = 'none'; // Hide floating home btn in trial
+            document.getElementById('resetBtn').style.display = 'none'; // Hide reset button in trial
+            
+            document.getElementById('singleScoreBox').style.display = 'block';
+            singlePlayerScore = 0;
+            document.getElementById('trialScoreDisplay').innerText = singlePlayerScore;
+
+            restartEntireQuiz();
+        }
+
+        function restartToPortal() {
+            document.getElementById('gameSection').style.display = 'none';
+            document.getElementById('portalSection').style.display = 'block';
+            backToLanding();
+        }
+
+        function renderQuiz() {
+            const data = currentQuizData[currentQuestionIndex];
+            const turnIndicator = document.getElementById('turnIndicator');
+
+            if (isTrialMode) {
+                turnIndicator.innerText = "Solve this Question";
+                turnIndicator.style.backgroundColor = '#4caf50'; // Green for single player
+            } else {
+                const currentTeam = (currentQuestionIndex % 2 === 0) ? 'A' : 'B';
+                turnIndicator.innerText = `Current Turn: Team ${currentTeam}`;
+                turnIndicator.style.backgroundColor = (currentTeam === 'A') ? '#ff5252' : '#ffca28';
+            }
+            turnIndicator.style.display = 'inline-block';
+
+            document.getElementById('questionText').innerHTML = data.question;
+            document.getElementById('questionText').style.textAlign = 'left';
+            
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = ''; 
+            data.options.forEach((optionHtml, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option';
+                btn.innerHTML = optionHtml;
+                btn.onclick = () => selectAnswer(index);
+                container.appendChild(btn);
+            });
+
+            document.getElementById('backBtn').disabled = (currentQuestionIndex === 0);
+            document.getElementById('nextBtn').disabled = (currentQuestionIndex === currentQuizData.length - 1);
+
+            applyColors();
+        }
+
+        function selectAnswer(selectedIndex) {
+            if (userChoices[currentQuestionIndex] !== null) return; 
+
+            userChoices[currentQuestionIndex] = selectedIndex;
+            
+            if (selectedIndex === currentQuizData[currentQuestionIndex].correctIndex) {
+                if (isTrialMode) {
+                    singlePlayerScore += 5;
+                    document.getElementById('trialScoreDisplay').innerText = singlePlayerScore;
+                } else {
+                    const currentTeam = (currentQuestionIndex % 2 === 0) ? 'A' : 'B';
+                    updateTeamScore(currentTeam, 5);
+                }
+            }
+            renderQuiz(); 
+        }
+
+        function applyColors() {
+            const choice = userChoices[currentQuestionIndex];
+            if (choice === null) return; 
+
+            const buttons = document.querySelectorAll('.option');
+            buttons.forEach((btn, index) => {
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+                if (index === currentQuizData[currentQuestionIndex].correctIndex) btn.classList.add('correct');
+                else if (index === choice) btn.classList.add('incorrect');
+            });
+        }
+
+        function goBack() { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuiz(); } }
+        function goNext() { if (currentQuestionIndex < currentQuizData.length - 1) { currentQuestionIndex++; renderQuiz(); } }
+
+        function resetQuestion() {
+            if (isTrialMode) return; // Feature disabled in trial
+
+            const choice = userChoices[currentQuestionIndex];
+            if (choice !== null) {
+                if (choice === currentQuizData[currentQuestionIndex].correctIndex) {
+                    const currentTeam = (currentQuestionIndex % 2 === 0) ? 'A' : 'B';
+                    updateTeamScore(currentTeam, -5);
+                }
+                userChoices[currentQuestionIndex] = null;
+                renderQuiz(); 
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('optionsContainer').style.display = 'none';
+            document.getElementById('controlsContainer').style.display = 'none';
+            document.getElementById('turnIndicator').style.display = 'none';
+            document.getElementById('singleScoreBox').style.display = 'none';
+
+            let resultHtml = `<div class="results-text">Quiz Finished!</div>`;
+
+            if (isTrialMode) {
+                // Update requested by user for Trial Mode Finish Screen
+                resultHtml += `
+                    <div class="results-score">Total Points: <b>${singlePlayerScore}</b> / ${currentQuizData.length * 5}</div>
+                    <div class="winner-text" style="font-size:24px;">Great Job!</div>
+                    <p style="font-size: 18px; color: #555; margin-top:15px; margin-bottom: 5px;">Want full access and more chapters?</p>
+                    
+                    <div style="background: #e8f5e9; border: 2px dashed #25D366; padding: 10px 20px; border-radius: 8px; margin: 10px auto; width: fit-content; font-size: 20px; font-weight: bold; color: #1ebe57;">
+                        WhatsApp: ${WHATSAPP_NUMBER}
+                    </div>
+                    
+                    <a href="https://wa.me/91${WHATSAPP_NUMBER}" target="_blank" class="btn-portal btn-whatsapp" style="display:inline-block; text-decoration:none; width:auto; padding: 12px 30px; border-radius:30px; margin-bottom: 15px;">
+                        Contact us on WhatsApp
+                    </a>
+                    
+                    <br>
+                    
+                    <button class="btn-portal btn-back-gray" onclick="restartToPortal()" style="display:inline-block; width:auto; padding: 10px 30px; border-radius:30px;">
+                        Exit to Home
+                    </button>
+                `;
+            } else {
+                let winnerText = "";
+                if (teamAScore > teamBScore) winnerText = "🏆 Team A Wins! 🏆";
+                else if (teamBScore > teamAScore) winnerText = "🏆 Team B Wins! 🏆";
+                else winnerText = "🤝 It's a Tie! 🤝";
+
+                resultHtml += `
+                    <div class="results-score" style="color: #ff5252;">Team A Final Score: <b>${teamAScore}</b></div>
+                    <div class="results-score" style="color: #ffca28;">Team B Final Score: <b>${teamBScore}</b></div>
+                    <div class="winner-text">${winnerText}</div>
+                `;
+            }
+
+            document.getElementById('questionText').style.textAlign = 'center';
+            document.getElementById('questionText').innerHTML = resultHtml;
+        }
+
+        function restartEntireQuiz() {
+            currentQuestionIndex = 0;
+            userChoices = new Array(currentQuizData.length).fill(null);
+            
+            if (isTrialMode) {
+                singlePlayerScore = 0;
+                document.getElementById('trialScoreDisplay').innerText = '0';
+            } else {
+                teamAScore = 0;
+                teamBScore = 0;
+                document.getElementById('teamAScoreDisplay').innerText = '0';
+                document.getElementById('teamBScoreDisplay').innerText = '0';
+            }
+            
+            document.getElementById('optionsContainer').style.display = 'block';
+            document.getElementById('controlsContainer').style.display = 'flex';
+            document.getElementById('turnIndicator').style.display = 'inline-block';
+            
+            renderQuiz();
+        }
+
+        function updateTeamScore(team, points) {
+            if (team === 'A') {
+                teamAScore += points;
+                if (teamAScore < 0) teamAScore = 0; 
+                document.getElementById('teamAScoreDisplay').innerText = teamAScore;
+            } else if (team === 'B') {
+                teamBScore += points;
+                if (teamBScore < 0) teamBScore = 0;
+                document.getElementById('teamBScoreDisplay').innerText = teamBScore;
+            }
+        }
+
+    </script>
+</body>
+</html>
